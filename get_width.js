@@ -35,27 +35,32 @@ fs.readdirSync(INPUT_FOLDER).forEach(file => {
         if (lRect==null) {
 
             console.log("still not output found, more tries");
-            let rectOptions = {maxAspectRatio: 1, nTries: 10000}; 
+            let rectOptions = {maxAspectRatio: 1, nTries: 100000}; 
             let lRect = d3plus.largestRect(polyPoints, rectOptions);
 
+            if (lRect==null) {
+                fs.writeFile(OUTPUT_FOLDER + file, String(0),function(err){
+                    if (err) return console.log(err);
+                        console.log('wrote file');
+                });
+            } else  {
+                // Write to file
+                console.log(lRect.height);
+                fs.writeFile(OUTPUT_FOLDER + file, String(lRect.height),function(err){
+                    if (err) return console.log(err);
+                        console.log('wrote file');
+                });
+            };
+    }   else {
             // Write to file
             console.log(lRect.height);
             fs.writeFile(OUTPUT_FOLDER + file, String(lRect.height),function(err){
                 if (err) return console.log(err);
                     console.log('wrote file');
             });
+       }    } 
 
-        } else {
-
-            // Write to file
-            console.log(lRect.height);
-            fs.writeFile(OUTPUT_FOLDER + file, String(lRect.height),function(err){
-                if (err) return console.log(err);
-                    console.log('wrote file');
-            });
-        };
-
-    } else {
+    else {
 
         // Write to file
         console.log(lRect.height);
