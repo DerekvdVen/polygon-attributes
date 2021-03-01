@@ -42,11 +42,11 @@ mp=0
 p=0
 multipolygons = []
 
-LIMIT = 0
+# LIMIT = 0
 for idx,row in polygons.iterrows():
-    if LIMIT == 100:
-        break
-    LIMIT+=1
+    # if LIMIT == 100:
+    #     break
+    # LIMIT+=1
     identifier = row[identifier_column_name] 
     polygon = row['geometry']
 
