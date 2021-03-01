@@ -9,7 +9,7 @@
 #              --squareness_factor "0.7"
 #              --lf_factor "2.5"
 #              --cl_distance "1.0"
-#              --layer "vGroen"
+#              --layer "vWaterafvoer"
 #    
 #!   ATTR_TYPE_ENCODING="SDF"
 #!   BEGIN_PYTHON=""
@@ -34,7 +34,7 @@
 #!   HISTORY="2012-10-16,Aaron&lt;space&gt;Koning,Created"
 #!   IGNORE_READER_FAILURE="No"
 #!   LAST_SAVE_BUILD="FME(R) 2020.2.3.0 (20210129 - Build 20820 - WIN64)"
-#!   LAST_SAVE_DATE="2021-02-26T15:56:33"
+#!   LAST_SAVE_DATE="2021-02-26T17:09:12"
 #!   LOG_FILE=""
 #!   LOG_MAX_RECORDED_FEATURES="200"
 #!   MARKDOWN_DESCRIPTION=""
@@ -106,7 +106,7 @@
 #! />
 #! <GLOBAL_PARAMETER
 #!   GUI_LINE="GUI OPTIONAL TEXT_OR_ATTR layer Welke laag wil je inladen?"
-#!   DEFAULT_VALUE="vGroen"
+#!   DEFAULT_VALUE="vWaterafvoer"
 #!   IS_STAND_ALONE="true"
 #! />
 #! </GLOBAL_PARAMETERS>
@@ -251,7 +251,7 @@ DEFAULT_MACRO lf_factor 2.5
 GUI OPTIONAL RANGE_SLIDER lf_factor "RANGE:[,]" OPTIONAL, welke hoogte/breedte verhouding telt als langwerpig?
 DEFAULT_MACRO cl_distance 1.0
 GUI OPTIONAL RANGE_SLIDER cl_distance "RANGE:[,]" OPTIONAL, simplification for centerline calculation:
-DEFAULT_MACRO layer vGroen
+DEFAULT_MACRO layer vWaterafvoer
 GUI OPTIONAL TEXT layer Welke laag wil je inladen?
 #! START_HEADER
 #! START_WB_HEADER

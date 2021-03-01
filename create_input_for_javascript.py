@@ -41,7 +41,12 @@ print(len(polygons.index), " polygons found")
 mp=0
 p=0
 multipolygons = []
+
+LIMIT = 0
 for idx,row in polygons.iterrows():
+    if LIMIT == 100:
+        break
+    LIMIT+=1
     identifier = row[identifier_column_name] 
     polygon = row['geometry']
 
@@ -49,11 +54,13 @@ for idx,row in polygons.iterrows():
         sep_polygons = list(polygon)    
         if len(sep_polygons) == 1:
             polygon = list(polygon)[0]
+        
+        
         if len(sep_polygons) > 1:
             multipolygons.append(identifier)
             continue
 
-
+    # single polygon
     if identifier:
         with open("data/javascript_input/" + identifier + ".txt","w") as file:
             n_coordinates = len(coord_lister(polygon))

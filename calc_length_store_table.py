@@ -51,84 +51,151 @@ polygons['l_methode'] = ''
 
 # Loop over polygons
 multipolygons = []
+stats = {}
+stats['multipolygons'] = 0
+stats['geen_breedte_gevonden'] = 0
+
+
+LIMIT = 0
 for idx,row in polygons.iterrows():
+    if LIMIT == 100:
+        break
+    LIMIT+=1
     identifier = row[identifier_column_name]
     polygon = row['geometry']
     
     if polygon.geom_type == 'MultiPolygon':
         sep_polygons = list(polygon) 
-        print(sep_polygons)
         if len(sep_polygons) == 1:
             polygon = list(polygon)[0]
+
+            polygon_area = polygon.area
+            area_dict[identifier] = polygon_area
+
+            # Als er een breedte terug is gegeven, lengte hiermee uitrekenen
+            if width_dict[identifier] != '0':
+                js_width = float(width_dict[identifier])
+                polygons.loc[idx,'js_width'] = js_width
+                js_length = area_dict[identifier]/ float(width_dict[identifier])
+            
+            # Als de vierkant methode niet werkt en er voor de identifier geen breedte is gevonden, gebruik gewoon de centerline methode, en check de output
+            else:
+                stats['geen_breedte_gevonden'] +=1
+                polygons.loc[idx,'check'] = True    
+
+                try:
+                    centerline = Centerline(polygon,interpolation_distance=cl_distance)
+                    polygons.loc[idx,'length'] = centerline.length
+                    polygons.loc[idx,'l_methode'] = 'centerline'
+                    continue
+                except:
+                    polygons.loc[idx,'length'] = 0
+                    polygons.loc[idx,'l_methode'] = 'none: bad centerline and no width found'
+                    continue
+        
+            # check how much of the polygon fills its bounds
+            squareness = calc_squareness(polygon, polygon_area)
+            
+            # check length and width of minimum surrounding rectangle
+            l,w = calc_l_w_minimum_rectangle(polygon)
+            
+            # check centerline, als deze niet werkt, geen lengte invullen en checken
+            try:
+                centerline = Centerline(polygon,interpolation_distance=cl_distance)
+            except:
+                polygons.loc[idx,'check'] = True
+                #centerline = Centerline(polygon,interpolation_distance=cl_distance)
+                polygons.loc[idx,'length'] = 0
+                polygons.loc[idx,'l_methode'] = 'none: bad centerline'
+                continue
+            
+            # Check of polygon langwerpig is
+            if l/w > lf_factor or w/l > lf_factor:
+                polygons.loc[idx,'length'] = centerline.length
+                polygons.loc[idx,'l_methode'] = 'centerline'
+
+            # Niet langwerpig? Check of polygon heel erg vierkant is, zo nee, dan is het waarschijnlijk een sliert
+            elif squareness < squareness_factor:
+                polygons.loc[idx,'length'] = centerline.length
+                polygons.loc[idx,'l_methode'] = 'centerline'
+
+            # Niet een sliert? Het polygon is erg vierkant en er kan geen goede centerline gevonden worden. Oppervlakte wordt berekent via de gevonden breedte. 
+            else:
+                polygons.loc[idx,'length'] = js_length
+                polygons.loc[idx,'l_methode'] = 'oppervlakte'
+
+            # Als oppervlakte methode en centerline methode heel andere lengtes meegeven heeft de polygon waarschijnlijk een gekke vorm. # Deze moeten gecheckt worden.
+            verhouding = js_length/centerline.length
+            if verhouding < lcheck_factor:
+                polygons.loc[idx,'check'] = True
+                    
         if len(sep_polygons) > 1:
-            multipolygons.append(identifier)
+            polygons.loc[idx,'check'] = True  
+            polygons.loc[idx,'length'] = 0
+            polygons.loc[idx,'l_methode'] = 'none: multiple polygons'
+            polygons.loc[idx,'js_width'] = 0
+    else:
+        polygon_area = polygon.area
+        area_dict[identifier] = polygon_area
+
+        # Als er een breedte terug is gegeven, lengte hiermee uitrekenen
+        if width_dict[identifier] != '0':
+            js_width = float(width_dict[identifier])
+            polygons.loc[idx,'js_width'] = js_width
+            js_length = area_dict[identifier]/ float(width_dict[identifier])
+        
+        # Als de vierkant methode niet werkt en er voor de identifier geen breedte is gevonden, gebruik gewoon de centerline methode, en check de output
+        else:
+            stats['geen_breedte_gevonden'] +=1
+            polygons.loc[idx,'check'] = True    
+
+            try:
+                centerline = Centerline(polygon,interpolation_distance=cl_distance)
+                polygons.loc[idx,'length'] = centerline.length
+                polygons.loc[idx,'l_methode'] = 'centerline'
+                continue
+            except:
+                polygons.loc[idx,'length'] = 0
+                polygons.loc[idx,'l_methode'] = 'none'
+                continue
+    
+        # check how much of the polygon fills its bounds
+        squareness = calc_squareness(polygon, polygon_area)
+        
+        # check length and width of minimum surrounding rectangle
+        l,w = calc_l_w_minimum_rectangle(polygon)
+        
+        # check centerline, als deze niet werkt, geen lengte invullen en checken
+        try:
+            centerline = Centerline(polygon,interpolation_distance=cl_distance)
+        except:
+            polygons.loc[idx,'check'] = True
+            #centerline = Centerline(polygon,interpolation_distance=cl_distance)
+            polygons.loc[idx,'length'] = 0
+            polygons.loc[idx,'l_methode'] = 'none'
             continue
-    
-    
-    
-    polygon_area = polygon.area
-    area_dict[identifier] = polygon_area
-    print(identifier)
-
-    # Als de vierkant methode niet werkt of er voor de identifier geen breedte is gevonden, gebruik gewoon de centerline methode, en check de output
-    print(float(width_dict[identifier]))
-    if width_dict[identifier] != '0':
-        js_width = float(width_dict[identifier])
-        print(float(width_dict[identifier]))
-        polygons.loc[idx,'js_width'] = js_width
-        js_length = area_dict[identifier]/ float(width_dict[identifier])
-        print(area_dict[identifier]/ float(width_dict[identifier]))
-    else:
-        polygons.loc[idx,'check'] = True
-        #centerline = Centerline(polygon,interpolation_distance=cl_distance)
-        polygons.loc[idx,'length'] = 0
-        polygons.loc[idx,'l_methode'] = 'none'
-        continue
-   
-    
-    # check how much of the polygon fills its bounds
-    squareness = calc_squareness(polygon, polygon_area)
-    
-    # check length and width of minimum surrounding rectangle
-    l,w = calc_l_w_minimum_rectangle(polygon)
-    
-    # check centerline
-    try:
-        centerline = Centerline(polygon,interpolation_distance=cl_distance)
-    except:
-        polygons.loc[idx,'check'] = True
-        #centerline = Centerline(polygon,interpolation_distance=cl_distance)
-        polygons.loc[idx,'length'] = 0
-        polygons.loc[idx,'l_methode'] = 'none'
-        continue
-    
-    # Check of polygon langwerpig is
-    if l/w > lf_factor or w/l > lf_factor:
-        print("langwerpig")
-        print("chosen length, centerline: ", centerline.length)
-        polygons.loc[idx,'length'] = centerline.length
-        polygons.loc[idx,'l_methode'] = 'centerline'
         
-    # Niet langwerpig? Check of polygon heel erg vierkant is, zo nee, dan is het waarschijnlijk een sliert
-    elif squareness < squareness_factor:
-        print("langwerpig")
-        print("chosen length, centerline: ", centerline.length)
-        polygons.loc[idx,'length'] = centerline.length
-        polygons.loc[idx,'l_methode'] = 'centerline'
-    
-    # Niet een sliert? Het polygon is erg vierkant en er kan geen goede centerline gevonden worden. Oppervlakte wordt berekent via de gevonden breedte. 
-    else:
-        print("vierkant", js_length)
-        print("chosen length square based: ", js_length)
-        polygons.loc[idx,'length'] = js_length
-        polygons.loc[idx,'l_methode'] = 'oppervlakte'
+        # Check of polygon langwerpig is
+        if l/w > lf_factor or w/l > lf_factor:
+            polygons.loc[idx,'length'] = centerline.length
+            polygons.loc[idx,'l_methode'] = 'centerline'
 
-    # Als oppervlakte methode en centerline methode heel andere lengtes meegeven heeft de polygon waarschijnlijk een gekke vorm. 
-    # Deze moeten gecheckt worden.
-    verhouding = js_length/centerline.length
-    if verhouding < lcheck_factor:
-        polygons.loc[idx,'check'] = True
-        
+        # Niet langwerpig? Check of polygon heel erg vierkant is, zo nee, dan is het waarschijnlijk een sliert
+        elif squareness < squareness_factor:
+            polygons.loc[idx,'length'] = centerline.length
+            polygons.loc[idx,'l_methode'] = 'centerline'
+
+        # Niet een sliert? Het polygon is erg vierkant en er kan geen goede centerline gevonden worden. Oppervlakte wordt berekent via de gevonden breedte. 
+        else:
+            polygons.loc[idx,'length'] = js_length
+            polygons.loc[idx,'l_methode'] = 'oppervlakte'
+
+        # Als oppervlakte methode en centerline methode heel andere lengtes meegeven heeft de polygon waarschijnlijk een gekke vorm. # Deze moeten gecheckt worden.
+        verhouding = js_length/centerline.length
+        if verhouding < lcheck_factor:
+            polygons.loc[idx,'check'] = True
+
 
 polygons.to_excel("output/output.xlsx")
 print("output stored")
+print(stats)

@@ -42,7 +42,7 @@ if exist %conda_polygons_location% (
     
     rem update packages
     call conda activate conda_polygons
-    call conda update --all
+    call conda update --all -y
     call conda deactivate
 
 ) else (
@@ -57,7 +57,7 @@ call conda install -n conda_polygons pip -y
 call conda activate conda_polygons
 pip install centerline
 
-
+call conda activate conda_polygons
 
 rem CODE
 python create_input_for_javascript.py %polygon_file_location% %identifier_column_name% %layer%
