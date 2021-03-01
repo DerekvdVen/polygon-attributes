@@ -1,6 +1,7 @@
 from shapely.geometry import Polygon, Point
 
 def coord_lister(geom):
+    
     coords = list(geom.exterior.coords)
     return (coords)
 

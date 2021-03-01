@@ -19,11 +19,13 @@ rem # distance = 1, Simplificatiefactor voor centerlijn. Hogere waardes leidt to
 set anaconda3_location=%1
 set polygon_file_location=%2
 set identifier_column_name=%3
+set layer=%4
 
-set lcheck_factor=%4
-set squareness_factor=%5
-set lf_factor=%6
-set cl_distance=%7   
+
+set lcheck_factor=%5
+set squareness_factor=%6
+set lf_factor=%7
+set cl_distance=%8
 
 rem fixed parameter
 set CONDA_ENV=\envs\conda_polygons
@@ -40,7 +42,7 @@ if exist %conda_polygons_location% (
     
     rem update packages
     call conda activate conda_polygons
-    call conda update --all
+    call conda update --all -y
     call conda deactivate
 
 ) else (
@@ -55,10 +57,10 @@ call conda install -n conda_polygons pip -y
 call conda activate conda_polygons
 pip install centerline
 
-
+call conda activate conda_polygons
 
 rem CODE
-python create_input_for_javascript.py %polygon_file_location% %identifier_column_name%
+python create_input_for_javascript.py %polygon_file_location% %identifier_column_name% %layer%
 node get_width.js
-python calc_length_store_table.py %polygon_file_location% %identifier_column_name% %lcheck_factor% %squareness_factor% %lf_factor% %cl_distance%
+python calc_length_store_table.py %polygon_file_location% %identifier_column_name% %layer% %lcheck_factor% %squareness_factor% %lf_factor% %cl_distance%
 call conda deactivate
